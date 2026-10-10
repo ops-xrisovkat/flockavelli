@@ -1,0 +1,19 @@
+services:
+  flockavelli:
+    build: .
+    image: flockavelli:latest
+    container_name: flockavelli
+    restart: unless-stopped
+    ports:
+      - "8080:8080"          # put nginx/Caddy or Cloudflare in front for TLS
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/flockavelli.db
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}     # set in .env to enable admin delete
+      - MAX_POSTS_PER_HOUR=${MAX_POSTS_PER_HOUR:-12}
+      - TRUST_PROXY=${TRUST_PROXY:-1}    # 1 when behind nginx/Caddy/Cloudflare
+    volumes:
+      - flock_data:/data     # the whole database lives here — back this up
+
+volumes:
+  flock_data:
