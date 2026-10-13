@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flockavelli</title>
+<meta name="description" content="A public ledger of corruption, filed by people who refuse to follow the flock.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#0c0d10; --surface:#14161b; --surface-2:#1b1e25; --fg:#f3f0e9; --muted:#9a9da6;
+    --line:#282b33; --accent:#ff3b33; --accent-ink:#fff; --warn:#f3b94d; --ok:#4cc38a;
+    --radius:10px; --maxw:1120px;
+    --display:"Anton","Arial Narrow",system-ui,sans-serif;
+    --body:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:dark;
+  }
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+    --bg:#f3f1ea; --surface:#fffdf8; --surface-2:#ece8df; --fg:#17150f; --muted:#67665d;
+    --line:#d8d3c7; --accent:#d61f1f; --warn:#a9710a; --ok:#1f8a5a; color-scheme:light;}}
+  :root[data-theme="light"]{
+    --bg:#f3f1ea; --surface:#fffdf8; --surface-2:#ece8df; --fg:#17150f; --muted:#67665d;
+    --line:#d8d3c7; --accent:#d61f1f; --warn:#a9710a; --ok:#1f8a5a; color-scheme:light;}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.5;-webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  h1,h2,h3{text-wrap:balance;margin:0} a{color:inherit} button{font-family:inherit}
+  ::selection{background:var(--accent);color:var(--accent-ink)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-inline:16px}
+  .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar-in{display:flex;align-items:center;gap:14px;min-height:58px;padding-block:9px}
+  .brand{font-family:var(--display);font-size:24px;letter-spacing:.06em;line-height:1;text-transform:uppercase}
+  .brand b{color:var(--accent);font-weight:inherit}
+  .bar-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-left:2px}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font-size:13px;font-weight:600;padding:9px 14px;border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s,transform .05s;white-space:nowrap}
+  .btn:hover{border-color:var(--accent)} .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn-primary:hover{filter:brightness(1.07)}
+  .btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .hero{padding-block:40px 26px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .word{font-family:var(--display);text-transform:uppercase;letter-spacing:.01em;font-size:clamp(52px,13vw,120px);line-height:.92;margin:0}
+  .word .k{color:var(--accent)}
+  .thesis{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;font-size:clamp(22px,4.5vw,34px);line-height:1.02;margin-top:18px}
+  .lede{max-width:60ch;color:var(--muted);margin-top:14px;font-size:15.5px}
+  .lede b{color:var(--fg);font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;min-width:0}
+  .tile .n{font-family:var(--display);font-size:clamp(30px,7vw,44px);line-height:1;font-variant-numeric:tabular-nums}
+  .tile.red .n{color:var(--accent)}
+  .tile .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  section{padding-block:28px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .sec-head h2{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;font-size:22px}
+  .sec-head .count{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .panel.flag{border-left:3px solid var(--accent)}
+  form{display:grid;gap:14px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:grid;gap:6px;min-width:0}
+  label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  label .req{color:var(--accent)}
+  input,select,textarea{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14.5px;font-family:var(--body)}
+  textarea{resize:vertical;min-height:96px}
+  .form-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between}
+  .hint{color:var(--muted);font-size:12px;max-width:52ch}
+  .msg{font-size:13px;font-weight:600} .msg.ok{color:var(--ok)} .msg.err{color:var(--accent)}
+  .controls{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;margin-bottom:18px}
+  .controls .field{gap:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:11px;min-width:0;transition:border-color .15s}
+  .card:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cat{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));padding:3px 7px;border-radius:999px}
+  .case{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-left:auto}
+  .status{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--warn)}
+  .card h3{font-family:var(--display);font-weight:400;letter-spacing:.02em;line-height:1.08;font-size:19px;text-transform:uppercase}
+  .meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .meta .mk{color:var(--fg)}
+  .desc{font-size:14px;overflow-wrap:anywhere}
+  .card-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+  .corrob{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font-size:12.5px;font-weight:600;padding:7px 11px;border-radius:999px;cursor:pointer;transition:border-color .15s}
+  .corrob:hover{border-color:var(--accent)} .corrob.on{border-color:var(--accent);color:var(--accent)}
+  .corrob .c{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .src{font-family:var(--mono);font-size:11.5px;color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+  .by{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+  .del{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;padding:2px 4px}
+  .del:hover{color:var(--accent)} .del.arm{color:var(--accent);font-weight:700}
+  .empty{border:1px dashed var(--line);border-radius:var(--radius);padding:38px 22px;text-align:center;color:var(--muted)}
+  .empty strong{display:block;color:var(--fg);font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.03em;font-size:20px;margin-bottom:8px}
+  footer{border-top:1px solid var(--line);padding-block:26px 40px;margin-top:10px}
+  .disc{color:var(--muted);font-size:12.5px;max-width:78ch} .disc b{color:var(--fg)}
+  .sign{font-family:var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-top:14px;font-size:15px}
+  [hidden]{display:none!important}
+  @media (max-width:640px){.stats{grid-template-columns:1fr 1fr 1fr;gap:8px}.tile{padding:12px}.row{grid-template-columns:1fr}.controls{grid-template-columns:1fr}.bar-tag{display:none}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  /* Flocker of the Week */
+  .flocker{padding-block:28px 6px}
+  .flocker-card{position:relative;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 15%,var(--surface)),var(--surface));border:1px solid color-mix(in srgb,var(--accent) 50%,var(--line));border-left:4px solid var(--accent);border-radius:var(--radius);padding:22px 22px 20px}
+  .flk-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .flk-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .flk-trophy{font-size:1.15em;filter:saturate(1.2)}
+  .flk-week{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-left:auto}
+  .flk-winner{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.01em;line-height:.98;font-size:clamp(30px,6.5vw,52px);margin:10px 0 6px}
+  .flk-charge{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.02em;font-size:clamp(16px,3vw,22px);line-height:1.08;color:var(--accent)}
+  .flk-roast{margin-top:14px;font-size:15px;max-width:74ch;color:var(--fg)}
+  .flk-roast p{margin:0 0 10px} .flk-roast p:last-child{margin-bottom:0}
+  .flk-foot{display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap;margin-top:18px}
+  .flk-receipts{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
+  .flk-receipts .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .flk-nominate{margin-left:auto}
+  .flk-archive{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .flk-archive b{color:var(--fg);font-weight:500}
+</style>
+</head>
+<body>
+<div class="bar"><div class="wrap bar-in">
+  <div class="brand">Flock<b>avelli</b></div>
+  <div class="bar-tag">Anti-Flock · Anti-Corruption</div>
+  <div class="spacer"></div>
+  <button class="btn btn-primary" id="jump">File a report</button>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">A public ledger of corruption</div>
+  <h1 class="word">Flock<span class="k">avelli</span></h1>
+  <div class="thesis">Break from the flock.</div>
+  <p class="lede">The flock looks away. You don't. <b>Flockavelli</b> is an open ledger where people
+    file what they've seen — corruption, abuse of power, quiet dealing — so it stops living in the dark.
+    Read what others filed. Corroborate what you know. Add what they missed.</p>
+  <div class="stats">
+    <div class="tile red"><div class="n" id="s-reports">0</div><div class="l">Reports filed</div></div>
+    <div class="tile"><div class="n" id="s-corrob">0</div><div class="l">Corroborations</div></div>
+    <div class="tile"><div class="n" id="s-cats">0</div><div class="l">Categories active</div></div>
+  </div>
+</div></header>
+
+<section id="flocker" class="flocker" hidden><div class="wrap">
+  <div class="flocker-card">
+    <div class="flk-head">
+      <span class="flk-badge"><span class="flk-trophy">🏆</span> Flocker of the Week</span>
+      <span class="flk-week" id="flk-week"></span>
+    </div>
+    <h2 class="flk-winner" id="flk-winner"></h2>
+    <div class="flk-charge" id="flk-charge"></div>
+    <div class="flk-roast" id="flk-roast"></div>
+    <div class="flk-foot">
+      <div class="flk-receipts" id="flk-receipts"><span class="lbl">Receipts:</span></div>
+      <button class="btn btn-primary flk-nominate" id="flk-nominate" type="button">Nominate a Flocker</button>
+    </div>
+    <div class="flk-archive" id="flk-archive" hidden></div>
+  </div>
+</div></section>
+
+<section id="file"><div class="wrap">
+  <div class="sec-head"><h2>File a report</h2><span class="count">Public · unverified until corroborated</span></div>
+  <div class="panel flag">
+    <form id="report-form" novalidate>
+      <div class="row">
+        <div class="field"><label for="f-cat">Category <span class="req">*</span></label><select id="f-cat" required></select></div>
+        <div class="field"><label for="f-entity">Who / what is involved</label><input id="f-entity" type="text" maxlength="120" placeholder="Agency, company, official, office…"></div>
+      </div>
+      <div class="field"><label for="f-title">Headline <span class="req">*</span></label><input id="f-title" type="text" maxlength="140" placeholder="One line — what happened" required></div>
+      <div class="row">
+        <div class="field"><label for="f-loc">Location</label><input id="f-loc" type="text" maxlength="90" placeholder="City, state, or jurisdiction"></div>
+        <div class="field"><label for="f-when">When</label><input id="f-when" type="text" maxlength="60" placeholder="e.g. 2024, March 2025, ongoing"></div>
+      </div>
+      <div class="field"><label for="f-desc">What happened <span class="req">*</span></label><textarea id="f-desc" maxlength="2200" placeholder="Describe it plainly. Stick to what you saw or can show." required></textarea></div>
+      <div class="row">
+        <div class="field"><label for="f-src">Source / evidence link</label><input id="f-src" type="url" maxlength="400" placeholder="https://… (document, article, filing)"></div>
+        <div class="field"><label for="f-alias">Sign it as</label><input id="f-alias" type="text" maxlength="40" placeholder="Anonymous"></div>
+      </div>
+      <div class="form-foot">
+        <div class="hint">Allegations only — nothing here is proven. Don't post private data, threats, or anything you can't stand behind.</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span class="msg" id="form-msg" hidden></span>
+          <button class="btn btn-primary" type="submit" id="submit-btn">Submit report</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div></section>
+
+<section id="ledger"><div class="wrap">
+  <div class="sec-head"><h2>The ledger</h2><span class="count" id="ledger-count"></span></div>
+  <div class="controls">
+    <div class="field"><input id="q" type="search" placeholder="Search headlines, entities, places…" aria-label="Search reports"></div>
+    <div class="field"><select id="filter-cat" aria-label="Filter by category"></select></div>
+    <div class="field"><select id="sort" aria-label="Sort reports">
+      <option value="new">Newest first</option><option value="corrob">Most corroborated</option><option value="old">Oldest first</option>
+    </select></div>
+  </div>
+  <div id="list"></div>
+</div></section>
+
+<footer><div class="wrap">
+  <p class="disc"><b>Read this.</b> Everything on Flockavelli is submitted by the public and is an
+    <b>unverified allegation</b>, not an established fact. Entries are not reviewed before they post.
+    Corroboration is a count of people who say they've seen the same thing — it is not proof. Verify
+    independently before you act on, repeat, or publish anything here. Don't submit private personal
+    information, threats, or harassment.</p>
+  <div class="sign">Think for yourself.</div>
+</div></footer>
+
+<script>
+(function(){
+  "use strict";
+  var CATS=["Government","Law Enforcement","Judiciary","Finance","Corporate","Healthcare",
+    "Education","Housing","Media","Nonprofit","Utilities","Other"];
+  var reports=[], loaded=false, armedDelete=null, armTimer=null;
+  var $=function(id){return document.getElementById(id);};
+
+  // persistent per-browser id, for corroborate de-dupe and owner-delete
+  var voterId="";
+  try{ voterId=localStorage.getItem("fv_voter")||""; if(!voterId){ voterId=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()); localStorage.setItem("fv_voter",voterId);} }catch(e){ voterId="anon-"+Math.random().toString(36).slice(2); }
+
+  function safeUrl(u){u=(u||"").trim();return /^https?:\/\//i.test(u)?u:"";}
+  function relTime(ts){if(!ts)return"";var s=Math.max(1,Math.floor((Date.now()-ts)/1000));if(s<60)return s+"s ago";var m=Math.floor(s/60);if(m<60)return m+"m ago";var h=Math.floor(m/60);if(h<24)return h+"h ago";var d=Math.floor(h/24);if(d<30)return d+"d ago";var mo=Math.floor(d/30);if(mo<12)return mo+"mo ago";return Math.floor(mo/12)+"y ago";}
+  function mk(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+
+  (function(){
+    var fc=$("f-cat");var def=document.createElement("option");def.value="";def.textContent="Select a category…";def.disabled=true;def.selected=true;fc.appendChild(def);
+    var all=document.createElement("option");all.value="";all.textContent="All categories";$("filter-cat").appendChild(all);
+    CATS.forEach(function(c){var o=document.createElement("option");o.value=c;o.textContent=c;fc.appendChild(o);var o2=document.createElement("option");o2.value=c;o2.textContent=c;$("filter-cat").appendChild(o2);});
+  })();
+
+  $("jump").addEventListener("click",function(){$("file").scrollIntoView({behavior:"smooth",block:"start"});setTimeout(function(){$("f-title").focus();},350);});
+
+  function renderStats(){
+    $("s-reports").textContent=reports.length.toLocaleString();
+    var c=0,cats={};reports.forEach(function(r){c+=(r.corroborations||0);if(r.category)cats[r.category]=1;});
+    $("s-corrob").textContent=c.toLocaleString();$("s-cats").textContent=Object.keys(cats).length.toLocaleString();
+  }
+  function view(){
+    var q=($("q").value||"").trim().toLowerCase(),fcat=$("filter-cat").value||"",sort=$("sort").value||"new";
+    var v=reports.filter(function(r){if(fcat&&r.category!==fcat)return false;if(q){var h=((r.title||"")+" "+(r.entity||"")+" "+(r.location||"")+" "+(r.description||"")+" "+(r.category||"")).toLowerCase();if(h.indexOf(q)<0)return false;}return true;});
+    v.sort(function(a,b){if(sort==="corrob")return (b.corroborations||0)-(a.corroborations||0)||(b.createdAt||0)-(a.createdAt||0);if(sort==="old")return (a.createdAt||0)-(b.createdAt||0);return (b.createdAt||0)-(a.createdAt||0);});
+    return v;
+  }
+  function card(r){
+    var el=mk("article","card"),top=mk("div","card-top");
+    top.appendChild(mk("span","cat",r.category||"Other"));
+    var n=r.corroborations||0,st=mk("span","status",n>=3?"Corroborated ×"+n:"Unverified");
+    if(n>=3){st.style.color="var(--ok)";st.style.borderColor="color-mix(in srgb,var(--ok) 50%,var(--line))";}
+    top.appendChild(st);top.appendChild(mk("span","case","#"+String(r.id).slice(-6).toUpperCase()));el.appendChild(top);
+    el.appendChild(mk("h3",null,r.title||"Untitled report"));
+    var meta=mk("div","meta");
+    if(r.entity){var s=mk("span");s.appendChild(mk("span","mk",r.entity));meta.appendChild(s);}
+    if(r.location)meta.appendChild(mk("span",null,"◆ "+r.location));
+    if(r.when)meta.appendChild(mk("span",null,"⏱ "+r.when));
+    if(meta.childNodes.length)el.appendChild(meta);
+    if(r.description)el.appendChild(mk("div","desc",r.description));
+    var foot=mk("div","card-foot");
+    var mine=false;try{mine=(localStorage.getItem("fv_vote_"+r.id)==="1");}catch(e){}
+    var cb=mk("button","corrob"+(mine?" on":""));cb.type="button";
+    cb.appendChild(document.createTextNode(mine?"✓ Corroborated":"Corroborate"));
+    var cnt=mk("span","c",String(n));cb.appendChild(cnt);
+    cb.addEventListener("click",function(){corroborate(r.id);});foot.appendChild(cb);
+    var su=safeUrl(r.sourceUrl);if(su){var a=mk("a","src","Source ↗");a.href=su;a.target="_blank";a.rel="noopener noreferrer";foot.appendChild(a);}
+    foot.appendChild(mk("span","by","— "+((r.alias&&r.alias.trim())||"Anonymous")+" · "+relTime(r.createdAt)));
+    if(r.submitterId&&r.submitterId===voterId){
+      var del=mk("button","del","Delete");del.type="button";
+      del.addEventListener("click",function(){
+        if(armedDelete===r.id){clearTimeout(armTimer);armedDelete=null;removeReport(r.id);}
+        else{armedDelete=r.id;del.textContent="Confirm?";del.classList.add("arm");clearTimeout(armTimer);armTimer=setTimeout(function(){armedDelete=null;del.textContent="Delete";del.classList.remove("arm");},3000);}
+      });foot.appendChild(del);
+    }
+    el.appendChild(foot);return el;
+  }
+  function renderList(){
+    var list=$("list"),v=view();
+    $("ledger-count").textContent=reports.length?(v.length+" of "+reports.length+" shown"):"";
+    list.innerHTML="";
+    if(!loaded){var e=mk("div","empty");e.appendChild(mk("strong",null,"Opening the ledger…"));e.appendChild(document.createTextNode("Pulling the latest filed reports."));list.appendChild(e);return;}
+    if(!reports.length){var e2=mk("div","empty");e2.appendChild(mk("strong",null,"The ledger is empty — for now"));e2.appendChild(document.createTextNode("No one has filed yet. Be the first: use “File a report” above."));list.appendChild(e2);return;}
+    if(!v.length){var e3=mk("div","empty");e3.appendChild(mk("strong",null,"Nothing matches"));e3.appendChild(document.createTextNode("No reports fit that search or filter."));list.appendChild(e3);return;}
+    var g=mk("div","grid");v.forEach(function(r){g.appendChild(card(r));});list.appendChild(g);
+  }
+  ["q","filter-cat","sort"].forEach(function(id){$(id).addEventListener("input",renderList);$(id).addEventListener("change",renderList);});
+
+  function flashMsg(t,ok){var m=$("form-msg");m.textContent=t;m.className="msg "+(ok?"ok":"err");m.hidden=false;setTimeout(function(){m.hidden=true;},4200);}
+
+  function load(){
+    fetch("/api/reports").then(function(r){return r.json();}).then(function(d){
+      reports=(d.reports||[]);loaded=true;renderStats();renderList();
+    }).catch(function(){loaded=true;renderList();});
+  }
+
+  $("report-form").addEventListener("submit",function(ev){
+    ev.preventDefault();
+    var cat=$("f-cat").value,title=$("f-title").value.trim(),desc=$("f-desc").value.trim();
+    if(!cat){flashMsg("Pick a category.",false);return;}
+    if(!title){flashMsg("Add a one-line headline.",false);return;}
+    if(!desc){flashMsg("Describe what happened.",false);return;}
+    var body={category:cat,title:title,description:desc,entity:$("f-entity").value.trim(),location:$("f-loc").value.trim(),when:$("f-when").value.trim(),sourceUrl:safeUrl($("f-src").value),alias:($("f-alias").value.trim()||"Anonymous"),submitterId:voterId};
+    var btn=$("submit-btn");btn.disabled=true;
+    fetch("/api/reports",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
+      .then(function(res){btn.disabled=false;
+        if(res.ok){$("report-form").reset();flashMsg("Filed. It's on the record.",true);load();}
+        else if(res.status===429){flashMsg((res.j&&res.j.error)||"Too many reports — slow down.",false);}
+        else{flashMsg((res.j&&res.j.error)||"Couldn't file that.",false);}
+      }).catch(function(){btn.disabled=false;flashMsg("Network error — try again.",false);});
+  });
+
+  function corroborate(id){
+    var already=false;try{already=(localStorage.getItem("fv_vote_"+id)==="1");}catch(e){}
+    if(already)return;
+    fetch("/api/reports/"+encodeURIComponent(id)+"/corroborate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({voterId:voterId})})
+      .then(function(r){return r.json();}).then(function(d){
+        try{localStorage.setItem("fv_vote_"+id,"1");}catch(e){}
+        for(var i=0;i<reports.length;i++){if(reports[i].id===id){reports[i].corroborations=d.corroborations;break;}}
+        renderStats();renderList();
+      }).catch(function(){});
+  }
+  function removeReport(id){
+    fetch("/api/reports/"+encodeURIComponent(id),{method:"DELETE",headers:{"x-voter-id":voterId}})
+      .then(function(){load();}).catch(function(){});
+  }
+
+  function loadFlocker(){
+    fetch("/flocker.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(!d||!d.current)return;
+      var c=d.current;
+      $("flk-week").textContent=c.week||"";
+      $("flk-winner").textContent=c.winner||"";
+      $("flk-charge").textContent=c.charge||"";
+      var roast=$("flk-roast");roast.innerHTML="";
+      (c.roast||"").split("\n\n").forEach(function(p){if(p.trim())roast.appendChild(mk("p",null,p.trim()));});
+      var rc=$("flk-receipts");
+      (c.sources||[]).forEach(function(s){var u=safeUrl(s.url);if(!u)return;var a=mk("a","src",(s.label||"Source")+" ↗");a.href=u;a.target="_blank";a.rel="noopener noreferrer";rc.appendChild(a);});
+      if(d.archive&&d.archive.length){
+        var ar=$("flk-archive");ar.hidden=false;ar.appendChild(document.createTextNode("Past Flockers: "));
+        var show=d.archive.slice(0,8);
+        show.forEach(function(a,i){ar.appendChild(mk("b",null,a.winner||""));if(i<show.length-1)ar.appendChild(document.createTextNode(" · "));});
+      }
+      $("flocker").hidden=false;
+    }).catch(function(){});
+  }
+  $("flk-nominate").addEventListener("click",function(){
+    try{$("f-cat").value="Law Enforcement";}catch(e){}
+    $("file").scrollIntoView({behavior:"smooth",block:"start"});
+    setTimeout(function(){var e=$("f-entity");e.placeholder="Which agency or official?";e.focus();},350);
+  });
+
+  renderList();load();loadFlocker();
+  setInterval(load,25000);
+})();
+</script>
+</body>
+</html>
